@@ -74,6 +74,32 @@ def mask_to_image(mask: np.ndarray, mask_values):
 
     return Image.fromarray(out)
 
+def simple_predict_cpu(image, model):
+    """ Take in an RGB image and return a predicted mask image.
+
+    Arguments:
+    image -- Image in PIL format
+    path_to_model -- UNET model (.pth) path 
+    """
+
+    # Set up the neural net
+    net = UNet(n_channels=3, n_classes=5)
+    device = torch.device('cpu')
+    net.to(device=device)
+
+    # Load the model
+    state_dict = torch.load(model, map_location=device)
+    mask_values = state_dict.pop('mask_values')
+    net.load_state_dict(state_dict)
+
+    # Make the prediction
+    mask = predict_img(net=net,
+                       full_img=image,
+                       scale_factor=1.0,
+                       device=device)
+    # Generate the Result
+    result = mask_to_image(mask, mask_values)
+    return result
 
 if __name__ == '__main__':
     args = get_args()
